@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件导入功能</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .upload-container {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress {
+            width: 0%;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+
+        .input-group {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="upload-container">
+        <input type="file" id="fileInput">
+        <button id="uploadButton">确定</button>
+    </div>
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+            <div id="successContent" style="display: none;">
+                <h2>导入成功</h2>
+                <div class="input-group">
+                    <label for="takeoffPointName">起降点1名称:</label>
+                    <input type="text" id="takeoffPointName">
+                    <span>经纬度: 116°23′45″E, 39°56′27″N</span>
+                    <select>
+                        <option value="takeoffPoint1">起降点1</option>
+                        <option value="takeoffField1">起降场1</option>
+                    </select>
+                    <p>坐标系: WGS84</p>
+                    <p>基于经纬度默认的地址: 北京市朝阳区</p>
+                    <label for="takeoffDescription1">描述:</label>
+                    <textarea id="takeoffDescription1" rows="4" cols="50"></textarea>
+                </div>
+                <div class="input-group">
+                    <label for="landingPointName">起降点2名称:</label>
+                    <input type="text" id="landingPointName">
+                    <span>经纬度: 116°24′12″E, 39°57′03″N</span>
+                    <select>
+                        <option value="takeoffPoint2">起降点2</option>
+                        <option value="takeoffField2">起降场2</option>
+                    </select>
+                    <p>坐标系: WGS84</p>
+                    <p>基于经纬度默认的地址: 北京市海淀区</p>
+                    <label for="landingDescription2">描述:</label>
+                    <textarea id="landingDescription2" rows="4" cols="50"></textarea>
+                </div>
+                <p>导入了 2 个坐标</p>
+                <button id="confirmButton">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadModal = document.getElementById('uploadModal');
+        const progressBar = document.getElementById('progressBar');
+        const successContent = document.getElementById('successContent');
+        const confirmButton = document.getElementById('confirmButton');
+
+        uploadButton.addEventListener('click', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                uploadModal.style.display = 'block';
+                let progress = 0;
+                const interval = setInterval(() => {
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        progressBar.style.display = 'none';
+                        successContent.style.display = 'block';
+                    } else {
+                        progress += 10;
+                        progressBar.style.width = `${progress}%`;
+                        progressBar.textContent = `${progress}%`;
+                    }
+                }, 500);
+            }
+        });
+
+        confirmButton.addEventListener('click', () => {
+            alert('导入最终成功！');
+            uploadModal.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressBar.style.display = 'block';
+            successContent.style.display = 'none';
+            fileInput.value = '';
+        });
+    </script>
+</body>
+
+</html>
+    
