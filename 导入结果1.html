@@ -85,8 +85,14 @@
             <div class="progress-bar">
                 <div class="progress" id="progressBar"></div>
             </div>
-            <div id="successContent" style="display: none;">
-                <h2>导入成功</h2>
+            <div id="resultContent" style="display: none;">
+                <h2>导入结果</h2>
+                <p>成功 2 条</p>
+                <p id="failCount">失败 2 条</p>
+                <div id="failReasons" style="display: none;">
+                    <h3>失败原因</h3>
+                    <ul id="failReasonList"></ul>
+                </div>
                 <div class="input-group">
                     <label for="takeoffPointName">起降点1名称:</label>
                     <input type="text" id="takeoffPointName">
@@ -113,8 +119,8 @@
                     <label for="landingDescription2">描述:</label>
                     <textarea id="landingDescription2" rows="4" cols="50"></textarea>
                 </div>
-                <p>导入了 2 个坐标</p>
-                <button id="confirmButton">确认</button>
+                <button id="confirmImportButton">确认导入</button>
+                <button id="cancelImportButton">取消导入</button>
             </div>
         </div>
     </div>
@@ -124,8 +130,12 @@
         const uploadButton = document.getElementById('uploadButton');
         const uploadModal = document.getElementById('uploadModal');
         const progressBar = document.getElementById('progressBar');
-        const successContent = document.getElementById('successContent');
-        const confirmButton = document.getElementById('confirmButton');
+        const resultContent = document.getElementById('resultContent');
+        const confirmImportButton = document.getElementById('confirmImportButton');
+        const cancelImportButton = document.getElementById('cancelImportButton');
+        const failCount = document.getElementById('failCount');
+        const failReasons = document.getElementById('failReasons');
+        const failReasonList = document.getElementById('failReasonList');
 
         uploadButton.addEventListener('click', () => {
             const file = fileInput.files[0];
@@ -136,7 +146,22 @@
                     if (progress >= 100) {
                         clearInterval(interval);
                         progressBar.style.display = 'none';
-                        successContent.style.display = 'block';
+                        resultContent.style.display = 'block';
+
+                        const failData = [
+                            { reason: '数据格式错误' },
+                            { reason: '坐标超出范围' }
+                        ];
+
+                        if (failData.length > 0) {
+                            failCount.textContent = `失败 ${failData.length} 条`;
+                            failReasons.style.display = 'block';
+                            failData.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item.reason;
+                                failReasonList.appendChild(li);
+                            });
+                        }
                     } else {
                         progress += 10;
                         progressBar.style.width = `${progress}%`;
@@ -146,13 +171,29 @@
             }
         });
 
-        confirmButton.addEventListener('click', () => {
+        confirmImportButton.addEventListener('click', () => {
             alert('导入最终成功！');
             uploadModal.style.display = 'none';
             progressBar.style.width = '0%';
             progressBar.textContent = '0%';
             progressBar.style.display = 'block';
-            successContent.style.display = 'none';
+            resultContent.style.display = 'none';
+            failCount.textContent = '失败 0 条';
+            failReasons.style.display = 'none';
+            failReasonList.innerHTML = '';
+            fileInput.value = '';
+        });
+
+        cancelImportButton.addEventListener('click', () => {
+            alert('导入已取消！');
+            uploadModal.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressBar.style.display = 'block';
+            resultContent.style.display = 'none';
+            failCount.textContent = '失败 0 条';
+            failReasons.style.display = 'none';
+            failReasonList.innerHTML = '';
             fileInput.value = '';
         });
     </script>
