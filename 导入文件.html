@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件录入功能</title>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            padding: 20px;
+            background-color: #f9fafb;
+        }
+
+        /* 弹窗样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+
+        /* 关闭图标样式 */
+        .close-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* 标题样式 */
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        /* 文件输入样式 */
+        .file-input {
+            margin-bottom: 1rem;
+        }
+
+        /* 按钮样式 */
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .button-primary {
+            background-color: #1677ff;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background-color: #0958d9;
+        }
+
+        .button-secondary {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .button-secondary:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* 输入组样式 */
+        .input-group {
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+        }
+
+        /* 录入结果弹窗分隔样式 */
+        .result-divider {
+            border-top: 1px solid #e5e7eb;
+            margin: 1rem 0;
+        }
+
+        /* 提示词样式 */
+        .prompt {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        th,
+        td {
+            border: 1px solid #e5e7eb;
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        /* 卡片样式 */
+        .card-container {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 1rem;
+        }
+
+        .card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            flex: 1;
+        }
+
+        .card h3 {
+            margin-top: 0;
+        }
+
+        /* 火箭加载动画样式 */
+        .loading-container {
+            display: none;
+            position: relative;
+            width: 100%;
+            height: 50px;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress {
+            width: 0%;
+            height: 20px;
+            background-color: #1677ff;
+            text-align: center;
+            line-height: 20px;
+            color: white;
+        }
+
+        .rocket {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="openUploadModalButtonWithPoints">有起降点版</button>
+    <button id="openUploadModalButtonWithoutPoints">无起降点版</button>
+    <div id="uploadModalWithPoints" class="modal">
+        <div class="modal-content">
+            <span class="close-icon" id="closeModalWithPoints">&times;</span>
+            <h2 class="modal-title">录入文件</h2>
+            <div class="file-input">
+                <input type="file" id="fileInputWithPoints">
+            </div>
+            <div class="button-container">
+                <button id="cancelUploadButtonWithPoints" class="button button-secondary">取消</button>
+                <button id="confirmUploadButtonWithPoints" class="button button-primary">确定</button>
+            </div>
+            <div class="loading-container" id="loadingContainerWithPoints">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBarWithPoints"></div>
+                </div>
+                <i class="fa-solid fa-rocket rocket" id="rocketWithPoints"></i>
+            </div>
+            <div id="resultContentWithPoints" style="display: none;">
+                <div class="card-container">
+                    <div class="card">
+                        <h3>录入情况</h3>
+                        <p>成功 2 条</p>
+                        <p id="failCountWithPoints">失败 2 条</p>
+                    </div>
+                    <div class="card" id="failReasonsWithPoints" style="display: none;">
+                        <h3>失败原因</h3>
+                        <ul id="failReasonListWithPoints"></ul>
+                    </div>
+                </div>
+                <div class="result-divider"></div>
+                <p class="prompt">经检测录入的起降点并未在系统中，请确认是否添加至「我的起降点」模块，取消请点击取消录入按钮</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>起降点名称</th>
+                            <th>经纬度</th>
+                            <th>起降点类型</th>
+                            <th>坐标系</th>
+                            <th>起降点地址</th>
+                            <th>描述</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" id="takeoffPointName"></td>
+                            <td>116°23′45″E, 39°56′27″N</td>
+                            <td>
+                                <select id="takeoffFieldType1">
+                                    <option value="" disabled selected>请选择</option>
+                                    <option value="takeoffPoint">起降点</option>
+                                    <option value="takeoffField">起降场</option>
+                                </select>
+                            </td>
+                            <td>WGS84</td>
+                            <td>北京市朝阳区</td>
+                            <td><textarea id="takeoffDescription1" rows="4" cols="50"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" id="landingPointName"></td>
+                            <td>116°24′12″E, 39°57′03″N</td>
+                            <td>
+                                <select id="landingFieldType2">
+                                    <option value="" disabled selected>请选择</option>
+                                    <option value="takeoffPoint">起降点</option>
+                                    <option value="takeoffField">起降场</option>
+                                </select>
+                            </td>
+                            <td>WGS84</td>
+                            <td>北京市海淀区</td>
+                            <td><textarea id="landingDescription2" rows="4" cols="50"></textarea></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="button-container">
+                    <button id="cancelImportButtonWithPoints" class="button button-secondary">取消录入</button>
+                    <button id="confirmImportButtonWithPoints" class="button button-primary">确认录入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="uploadModalWithoutPoints" class="modal">
+        <div class="modal-content">
+            <span class="close-icon" id="closeModalWithoutPoints">&times;</span>
+            <h2 class="modal-title">录入文件</h2>
+            <div class="file-input" id="fileInputDivWithoutPoints">
+                <input type="file" id="fileInputWithoutPoints">
+            </div>
+            <div class="button-container" id="buttonContainerWithoutPoints">
+                <button id="cancelUploadButtonWithoutPoints" class="button button-secondary">取消</button>
+                <button id="confirmUploadButtonWithoutPoints" class="button button-primary">确定</button>
+            </div>
+            <div class="loading-container" id="loadingContainerWithoutPoints">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBarWithoutPoints"></div>
+                </div>
+                <i class="fa-solid fa-rocket rocket" id="rocketWithoutPoints"></i>
+            </div>
+            <div id="resultContentWithoutPoints" style="display: none;">
+                <div class="card-container">
+                    <div class="card">
+                        <h3>录入情况</h3>
+                        <p>成功 2 条</p>
+                        <p id="failCountWithoutPoints">失败 2 条</p>
+                    </div>
+                    <div class="card" id="failReasonsWithoutPoints" style="display: none;">
+                        <h3>失败原因</h3>
+                        <ul id="failReasonListWithoutPoints"></ul>
+                    </div>
+                </div>
+                <div class="button-container" style="margin-top: 1rem;">
+                    <button id="cancelImportButtonWithoutPoints" class="button button-secondary">取消录入</button>
+                    <button id="confirmImportButtonWithoutPoints" class="button button-primary">确认录入</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script>
+        const openUploadModalButtonWithPoints = document.getElementById('openUploadModalButtonWithPoints');
+        const uploadModalWithPoints = document.getElementById('uploadModalWithPoints');
+        const cancelUploadButtonWithPoints = document.getElementById('cancelUploadButtonWithPoints');
+        const confirmUploadButtonWithPoints = document.getElementById('confirmUploadButtonWithPoints');
+        const fileInputWithPoints = document.getElementById('fileInputWithPoints');
+        const loadingContainerWithPoints = document.getElementById('loadingContainerWithPoints');
+        const progressBarWithPoints = document.getElementById('progressBarWithPoints');
+        const rocketWithPoints = document.getElementById('rocketWithPoints');
+        const resultContentWithPoints = document.getElementById('resultContentWithPoints');
+        const confirmImportButtonWithPoints = document.getElementById('confirmImportButtonWithPoints');
+        const cancelImportButtonWithPoints = document.getElementById('cancelImportButtonWithPoints');
+        const failCountWithPoints = document.getElementById('failCountWithPoints');
+        const failReasonsWithPoints = document.getElementById('failReasonsWithPoints');
+        const failReasonListWithPoints = document.getElementById('failReasonListWithPoints');
+        const closeModalWithPoints = document.getElementById('closeModalWithPoints');
+
+        const openUploadModalButtonWithoutPoints = document.getElementById('openUploadModalButtonWithoutPoints');
+        const uploadModalWithoutPoints = document.getElementById('uploadModalWithoutPoints');
+        const cancelUploadButtonWithoutPoints = document.getElementById('cancelUploadButtonWithoutPoints');
+        const confirmUploadButtonWithoutPoints = document.getElementById('confirmUploadButtonWithoutPoints');
+        const fileInputWithoutPoints = document.getElementById('fileInputWithoutPoints');
+        const fileInputDivWithoutPoints = document.getElementById('fileInputDivWithoutPoints');
+        const buttonContainerWithoutPoints = document.getElementById('buttonContainerWithoutPoints');
+        const loadingContainerWithoutPoints = document.getElementById('loadingContainerWithoutPoints');
+        const progressBarWithoutPoints = document.getElementById('progressBarWithoutPoints');
+        const rocketWithoutPoints = document.getElementById('rocketWithoutPoints');
+        const resultContentWithoutPoints = document.getElementById('resultContentWithoutPoints');
+        const confirmImportButtonWithoutPoints = document.getElementById('confirmImportButtonWithoutPoints');
+        const cancelImportButtonWithoutPoints = document.getElementById('cancelImportButtonWithoutPoints');
+        const failCountWithoutPoints = document.getElementById('failCountWithoutPoints');
+        const failReasonsWithoutPoints = document.getElementById('failReasonsWithoutPoints');
+        const failReasonListWithoutPoints = document.getElementById('failReasonListWithoutPoints');
+        const closeModalWithoutPoints = document.getElementById('closeModalWithoutPoints');
+
+        openUploadModalButtonWithPoints.addEventListener('click', () => {
+            uploadModalWithPoints.style.display = 'block';
+        });
+
+        cancelUploadButtonWithPoints.addEventListener('click', () => {
+            uploadModalWithPoints.style.display = 'none';
+            fileInputWithPoints.value = '';
+        });
+
+        closeModalWithPoints.addEventListener('click', () => {
+            uploadModalWithPoints.style.display = 'none';
+            fileInputWithPoints.value = '';
+            loadingContainerWithPoints.style.display = 'none';
+            progressBarWithPoints.style.width = '0%';
+            rocketWithPoints.style.left = '0';
+            resultContentWithPoints.style.display = 'none';
+            failCountWithPoints.textContent = '失败 0 条';
+            failReasonsWithPoints.style.display = 'none';
+            failReasonListWithPoints.innerHTML = '';
+            document.querySelector('.file-input').style.display = 'block';
+            document.querySelector('.button-container').style.display = 'flex';
+        });
+
+        confirmUploadButtonWithPoints.addEventListener('click', () => {
+            const file = fileInputWithPoints.files[0];
+            if (file) {
+                document.querySelector('.file-input').style.display = 'none';
+                document.querySelector('.button-container').style.display = 'none';
+                loadingContainerWithPoints.style.display = 'block';
+                let progress = 0;
+                const interval = setInterval(() => {
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        loadingContainerWithPoints.style.display = 'none';
+                        resultContentWithPoints.style.display = 'block';
+
+                        const failData = [
+                            { reason: '数据格式错误' },
+                            { reason: '坐标超出范围' }
+                        ];
+
+                        if (failData.length > 0) {
+                            failCountWithPoints.textContent = `失败 ${failData.length} 条`;
+                            failReasonsWithPoints.style.display = 'block';
+                            failData.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item.reason;
+                                failReasonListWithPoints.appendChild(li);
+                            });
+                        }
+                    } else {
+                        progress += 10;
+                        progressBarWithPoints.style.width = `${progress}%`;
+                        const containerWidth = loadingContainerWithPoints.offsetWidth;
+                        const rocketWidth = rocketWithPoints.offsetWidth;
+                        const newLeft = (progress / 100) * (containerWidth - rocketWidth);
+                        rocketWithPoints.style.left = `${newLeft}px`;
+                    }
+                }, 200);
+            }
+        });
+
+        confirmImportButtonWithPoints.addEventListener('click', () => {
+            alert('录入最终成功！');
+            uploadModalWithPoints.style.display = 'none';
+            loadingContainerWithPoints.style.display = 'none';
+            progressBarWithPoints.style.width = '0%';
+            rocketWithPoints.style.left = '0';
+            resultContentWithPoints.style.display = 'none';
+            failCountWithPoints.textContent = '失败 0 条';
+            failReasonsWithPoints.style.display = 'none';
+            failReasonListWithPoints.innerHTML = '';
+            fileInputWithPoints.value = '';
+            document.querySelector('.file-input').style.display = 'block';
+            document.querySelector('.button-container').style.display = 'flex';
+        });
+
+        cancelImportButtonWithPoints.addEventListener('click', () => {
+            alert('录入已取消！');
+            uploadModalWithPoints.style.display = 'none';
+            loadingContainerWithPoints.style.display = 'none';
+            progressBarWithPoints.style.width = '0%';
+            rocketWithPoints.style.left = '0';
+            resultContentWithPoints.style.display = 'none';
+            failCountWithPoints.textContent = '失败 0 条';
+            failReasonsWithPoints.style.display = 'none';
+            failReasonListWithPoints.innerHTML = '';
+            fileInputWithPoints.value = '';
+            document.querySelector('.file-input').style.display = 'block';
+            document.querySelector('.button-container').style.display = 'flex';
+        });
+
+        openUploadModalButtonWithoutPoints.addEventListener('click', () => {
+            uploadModalWithoutPoints.style.display = 'block';
+        });
+
+        cancelUploadButtonWithoutPoints.addEventListener('click', () => {
+            uploadModalWithoutPoints.style.display = 'none';
+            fileInputWithoutPoints.value = '';
+        });
+
+        closeModalWithoutPoints.addEventListener('click', () => {
+            uploadModalWithoutPoints.style.display = 'none';
+            fileInputWithoutPoints.value = '';
+            loadingContainerWithoutPoints.style.display = 'none';
+            progressBarWithoutPoints.style.width = '0%';
+            rocketWithoutPoints.style.left = '0';
+            resultContentWithoutPoints.style.display = 'none';
+            failCountWithoutPoints.textContent = '失败 0 条';
+            failReasonsWithoutPoints.style.display = 'none';
+            failReasonListWithoutPoints.innerHTML = '';
+            fileInputDivWithoutPoints.style.display = 'block';
+            buttonContainerWithoutPoints.style.display = 'flex';
+        });
+
+        confirmUploadButtonWithoutPoints.addEventListener('click', () => {
+            const file = fileInputWithoutPoints.files[0];
+            if (file) {
+                fileInputDivWithoutPoints.style.display = 'none';
+                buttonContainerWithoutPoints.style.display = 'none';
+                loadingContainerWithoutPoints.style.display = 'block';
+                let progress = 0;
+                const interval = setInterval(() => {
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        loadingContainerWithoutPoints.style.display = 'none';
+                        resultContentWithoutPoints.style.display = 'block';
+
+                        const failData = [
+                            { reason: '数据格式错误' },
+                            { reason: '坐标超出范围' }
+                        ];
+
+                        if (failData.length > 0) {
+                            failCountWithoutPoints.textContent = `失败 ${failData.length} 条`;
+                            failReasonsWithoutPoints.style.display = 'block';
+                            failData.forEach(item => {
+                                const li = document.createElement('li');
+                                li.textContent = item.reason;
+                                failReasonListWithoutPoints.appendChild(li);
+                            });
+                        }
+                    } else {
+                        progress += 10;
+                        progressBarWithoutPoints.style.width = `${progress}%`;
+                        const containerWidth = loadingContainerWithoutPoints.offsetWidth;
+                        const rocketWidth = rocketWithoutPoints.offsetWidth;
+                        const newLeft = (progress / 100) * (containerWidth - rocketWidth);
+                        rocketWithoutPoints.style.left = `${newLeft}px`;
+                    }
+                }, 200);
+            }
+        });
+
+        confirmImportButtonWithoutPoints.addEventListener('click', () => {
+            alert('录入最终成功！');
+            uploadModalWithoutPoints.style.display = 'none';
+            loadingContainerWithoutPoints.style.display = 'none';
+            progressBarWithoutPoints.style.width = '0%';
+            rocketWithoutPoints.style.left = '0';
+            resultContentWithoutPoints.style.display = 'none';
+            failCountWithoutPoints.textContent = '失败 0 条';
+            failReasonsWithoutPoints.style.display = 'none';
+            failReasonListWithoutPoints.innerHTML = '';
+            fileInputWithoutPoints.value = '';
+            fileInputDivWithoutPoints.style.display = 'block';
+            buttonContainerWithoutPoints.style.display = 'flex';
+        });
+
+        cancelImportButtonWithoutPoints.addEventListener('click', () => {
+            alert('录入已取消！');
+            uploadModalWithoutPoints.style.display = 'none';
+            loadingContainerWithoutPoints.style.display = 'none';
+            progressBarWithoutPoints.style.width = '0%';
+            rocketWithoutPoints.style.left = '0';
+            resultContentWithoutPoints.style.display = 'none';
+            failCountWithoutPoints.textContent = '失败 0 条';
+            failReasonsWithoutPoints.style.display = 'none';
+            failReasonListWithoutPoints.innerHTML = '';
+            fileInputWithoutPoints.value = '';
+            fileInputDivWithoutPoints.style.display = 'block';
+            buttonContainerWithoutPoints.style.display = 'flex';
+        });
+    </script>
+</body>
+
+</html>
+    
